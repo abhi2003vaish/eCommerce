@@ -1,6 +1,9 @@
 package com.codingshuttle.ecommerce.order_service.service;
 
+import com.codingshuttle.ecommerce.order_service.clients.InventoryOpenFeignClient;
 import com.codingshuttle.ecommerce.order_service.dto.OrderRequestDTO;
+import com.codingshuttle.ecommerce.order_service.entity.OrderItem;
+import com.codingshuttle.ecommerce.order_service.entity.OrderStatus;
 import com.codingshuttle.ecommerce.order_service.entity.Orders;
 import com.codingshuttle.ecommerce.order_service.repository.OrdersRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,8 @@ public class OrdersService {
     private final OrdersRepository orderRepository;
     private final ModelMapper modelMapper;
 
+    private final InventoryOpenFeignClient inventoryOpenFeignClient;
+
     public List<OrderRequestDTO> getAllOrders() {
         log.info("Fetching all orders");
         List<Orders> orders = orderRepository.findAll();
@@ -29,5 +34,24 @@ public class OrdersService {
         log.info("Fetching order with ID: {}", id);
         Orders order = orderRepository.findById(id).orElseThrow(() -> new RuntimeException("Order not found"));
         return modelMapper.map(order, OrderRequestDTO.class);
+    }
+
+    public OrderRequestDTO createOrder(OrderRequestDTO orderRequestDTO) {
+        Double totalPrice= inventoryOpenFeignClient.reduceStocks(orderRequestDTO);
+
+        Orders orders=modelMapper.map(orderRequestDTO,Orders.class);
+
+        //  the parent is Orders and child is OrderItem and foreign key field is in OrderItem so this loop set the
+        //  OrderItem's field order with the Orders id so that all OrderItem should be associated with the Orders and
+        //  then save the Orders and OrderItem together
+        for(OrderItem orderItem:orders.getItems()){
+            orderItem.setOrder(orders);
+        }
+        orders.setTotalPrice(totalPrice);
+        orders.setOrderStatus(OrderStatus.CONFIRMED);
+
+        Orders savedOrder=orderRepository.save(orders);
+
+        return modelMapper.map(savedOrder, OrderRequestDTO.class);
     }
 }
