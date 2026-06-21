@@ -1,5 +1,5 @@
 INSERT INTO products (title, price, stock) VALUES
-('Wireless Mouse', 19.99, 150),
+('Wireless Mouse', 19.99, 300),
 ('Gaming Keyboard', 49.99, 80),
 ('Bluetooth Speaker', 34.50, 60),
 ('USB-C Charger', 24.95, 120),

@@ -1,0 +1,42 @@
+management:
+  health:
+    circuitBreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+        show-details: always
+
+
+resilience4j:
+  retry:
+    configs:
+      default:
+        maxRetryAttempts: 3
+        waitDuration: 100ms
+    instances:
+      inventoryRetry:
+        baseConfig: default
+        maxRetryAttempts: 3
+        waitDuration: 100ms
+  rateLimiter:
+    instances:
+      inventoryRateLimiter:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 100ms
+  circuitBreaker:
+    instances:
+      inventoryCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 1s
+        permittedNumberOfCallsInHalfOpenState: 3
+        eventConsumerBufferSize: 10
+
